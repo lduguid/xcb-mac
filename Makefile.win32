@@ -1,0 +1,98 @@
+# Windows binaries.
+#   make -f Makefile.win32                 MinGW-w64 (unsuffixed .exe)
+#   make -f Makefile.win32 TOOLSET=msvc    Visual Studio cl
+#   make -f Makefile.win32 TAG=-w64        xcb-mac-w64.exe (etc.)
+# Parent: make everything  (Linux + *-mingw.exe / *-w64.exe / *-msvc.exe)
+
+TOOLSET ?= mingw
+
+# TAG=-mingw | -w64 | -msvc so toolchains do not clobber each other.
+# Empty TAG keeps the old names (xcb-mac.exe) for a single-toolchain build.
+TAG ?=
+NAMES = xcb-mac xcb-mac-quest xcb-mac-castle xcb-mac-paint
+DEMOS = $(addsuffix $(TAG).exe,$(NAMES))
+
+.DEFAULT_GOAL := all
+.PHONY: all clean check-mingw check-msvc
+
+ifeq ($(TOOLSET),msvc)
+
+ifeq ($(OS),Windows_NT)
+CL = msvc-cl.cmd
+DEVNUL = NUL
+else
+CL = sh msvc-cl.sh
+DEVNUL = /dev/null
+endif
+
+WINLIBS = user32.lib gdi32.lib winmm.lib
+CLFLAGS = -nologo -O2 -W3 -D_CRT_SECURE_NO_WARNINGS
+# GUI apps: no extra console. Keep main(); CRT still starts there.
+MSVC_GUI = -link -SUBSYSTEM:WINDOWS -ENTRY:mainCRTStartup
+
+all: check-msvc $(DEMOS)
+	@echo "win32 TOOLSET=msvc  (cl)"
+
+check-msvc:
+	@$(CL) -nologo -Bv >$(DEVNUL) 2>&1 || { \
+	  echo "Need Visual Studio C++ x64 toolset (cl + vcvars64)."; \
+	  echo "  make -f Makefile.win32 TOOLSET=msvc"; \
+	  echo "  Or set VCVARS to your vcvars64.bat"; \
+	  exit 1; }
+
+xcb-mac$(TAG).exe: demo.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(CL) $(CLFLAGS) -Fe$@ demo.c mac.c mac_font.c mac_snd.c plat_win32.c $(MSVC_GUI) $(WINLIBS)
+
+xcb-mac-quest$(TAG).exe: demo_quest.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(CL) $(CLFLAGS) -Fe$@ demo_quest.c mac.c mac_font.c mac_snd.c plat_win32.c $(MSVC_GUI) $(WINLIBS)
+
+xcb-mac-castle$(TAG).exe: demo_castle.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(CL) $(CLFLAGS) -Fe$@ demo_castle.c mac.c mac_font.c mac_snd.c plat_win32.c $(MSVC_GUI) $(WINLIBS)
+
+xcb-mac-paint$(TAG).exe: demo_paint.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(CL) $(CLFLAGS) -Fe$@ demo_paint.c mac.c mac_font.c mac_snd.c plat_win32.c $(MSVC_GUI) $(WINLIBS)
+
+else
+
+ifeq ($(OS),Windows_NT)
+MINGW_CC ?= gcc
+else
+MINGW_CC ?= x86_64-w64-mingw32-gcc
+endif
+MINGW_GUI = -mwindows -lgdi32 -luser32 -lwinmm
+
+all: check-mingw $(DEMOS)
+	@echo "win32 TOOLSET=mingw  ($(MINGW_CC))"
+
+check-mingw:
+	@command -v $(MINGW_CC) >/dev/null || { \
+	  echo "Need MinGW-w64. On Debian/Ubuntu/WSL:"; \
+	  echo "  sudo apt install gcc-mingw-w64-x86-64"; \
+	  echo "Then re-run: make -f Makefile.win32"; \
+	  echo "Or: make -f Makefile.win32 TOOLSET=msvc"; \
+	  exit 1; }
+
+xcb-mac$(TAG).exe: demo.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(MINGW_CC) -std=c11 -Wall -Wextra -O2 -o $@ demo.c mac.c mac_font.c mac_snd.c plat_win32.c \
+		$(MINGW_GUI)
+
+xcb-mac-quest$(TAG).exe: demo_quest.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(MINGW_CC) -std=c11 -Wall -Wextra -O2 -o $@ demo_quest.c mac.c mac_font.c mac_snd.c plat_win32.c \
+		$(MINGW_GUI)
+
+xcb-mac-castle$(TAG).exe: demo_castle.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(MINGW_CC) -std=c11 -Wall -Wextra -O2 -o $@ demo_castle.c mac.c mac_font.c mac_snd.c plat_win32.c \
+		$(MINGW_GUI)
+
+xcb-mac-paint$(TAG).exe: demo_paint.c mac.c mac_font.c mac_snd.c plat_win32.c mac.h mac_internal.h
+	$(MINGW_CC) -std=c11 -Wall -Wextra -O2 -o $@ demo_paint.c mac.c mac_font.c mac_snd.c plat_win32.c \
+		$(MINGW_GUI)
+
+endif
+
+clean:
+	rm -f $(DEMOS) *.obj \
+		$(addsuffix .exe,$(NAMES)) \
+		$(addsuffix -mingw.exe,$(NAMES)) \
+		$(addsuffix -w64.exe,$(NAMES)) \
+		$(addsuffix -msvc.exe,$(NAMES))

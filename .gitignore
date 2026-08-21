@@ -1,0 +1,13 @@
+xcb-mac
+xcb-mac-quest
+xcb-mac-castle
+xcb-mac-paint
+painting.pbm
+painting.h
+*.exe
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+nul
