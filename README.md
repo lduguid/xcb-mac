@@ -2,6 +2,8 @@
 
 You are drawing on a compact Macintosh. The page is **512×342, 1 bit**: 0 is white, 1 is black. There is no grey hardware. Midtones are 8×8 dither patterns (the same trick MacPaint and Dark Castle used). You never plot RGB.
 
+This is not a Macintosh emulator. It is a small subset of QuickDraw-style 1-bit graphics so demos share one C API.
+
 Include `mac.h`. The host scales that 1-bit page inside a bezel, composites the arrow, and (optionally) blooms neighbors so a checker reads as grey. The bitmap **persists** across frames — XOR a sprite to erase it, or erase and redraw. Call `mac_swap` when the page is ready.
 
 Linux and Windows. Do not include X11 or Win32; that is `plat.c` / `plat_win32.c`.
