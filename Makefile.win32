@@ -34,7 +34,7 @@ all: check-msvc $(DEMOS)
 	@echo "win32 TOOLSET=msvc  (cl)"
 
 check-msvc:
-	@$(CL) -nologo -Bv >$(DEVNUL) 2>&1 || { \
+	@$(CL) -nologo -help >$(DEVNUL) 2>&1 || { \
 	  echo "Need Visual Studio C++ x64 toolset (cl + vcvars64)."; \
 	  echo "  make -f Makefile.win32 TOOLSET=msvc"; \
 	  echo "  Or set VCVARS to your vcvars64.bat"; \
@@ -56,6 +56,8 @@ else
 
 ifeq ($(OS),Windows_NT)
 MINGW_CC ?= gcc
+else ifeq ($(MINGW_HOST),windows)
+MINGW_CC ?= sh mingw-cc.sh
 else
 MINGW_CC ?= x86_64-w64-mingw32-gcc
 endif
@@ -65,7 +67,7 @@ all: check-mingw $(DEMOS)
 	@echo "win32 TOOLSET=mingw  ($(MINGW_CC))"
 
 check-mingw:
-	@command -v $(MINGW_CC) >/dev/null || { \
+	@$(MINGW_CC) -dumpmachine >/dev/null 2>&1 || { \
 	  echo "Need MinGW-w64. On Debian/Ubuntu/WSL:"; \
 	  echo "  sudo apt install gcc-mingw-w64-x86-64"; \
 	  echo "Then re-run: make -f Makefile.win32"; \

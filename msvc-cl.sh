@@ -1,6 +1,8 @@
 #!/bin/sh
-# Run Visual Studio cl from WSL. cmd cannot start in a UNC cwd, so hop via C:\Windows.
+# Run Visual Studio cl from WSL. Start cmd from a drive letter so it is not
+# stuck with a UNC WSL cwd (cmd cannot cd into those).
 set -e
 win=$(wslpath -w "$PWD")
-cmd.exe /c "cd /d C:\Windows && pushd ${win} && msvc-cl.cmd $*"
+cd /mnt/c/Windows
+cmd.exe /c "pushd ${win} && msvc-cl.cmd $*"
 exit $?

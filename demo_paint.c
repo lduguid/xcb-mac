@@ -108,7 +108,7 @@ static int pat_i = 5; /* black */
 static int brush = 8;
 static int fatbits, grid = 1;
 static int scroll_x, scroll_y, fat_x, fat_y;
-static int dragging, shape_on, x0, y0, x1, y1, last_x, last_y;
+static int dragging, shape_on, drag_x0, drag_y0, drag_x1, drag_y1, last_x, last_y;
 static int pencil_white, pan_x, pan_y, pan_sx, pan_sy;
 static unsigned rng = 1;
 static MacRect about_r;
@@ -556,7 +556,7 @@ static void enter_fat(int x, int y)
 
 static MacRect drag_rect(void)
 {
-    return mac_rect(x0, y0, x1 + 1, y1 + 1);
+    return mac_rect(drag_x0, drag_y0, drag_x1 + 1, drag_y1 + 1);
 }
 
 static void commit_shape(void)
@@ -566,7 +566,7 @@ static void commit_shape(void)
 
     switch (tool) {
     case T_LINE:
-        doc_line(x0, y0, x1, y1, pen_sz(), pats[5], INK_COPY);
+        doc_line(drag_x0, drag_y0, drag_x1, drag_y1, pen_sz(), pats[5], INK_COPY);
         break;
     case T_RECT:
         doc_frame_rect(r, pats[5]);
@@ -908,8 +908,8 @@ static void draw_preview(void)
 
         mac_pen_size(pw, pw);
     }
-    doc_to_screen(x0, y0, &ax, &ay);
-    doc_to_screen(x1, y1, &bx, &by);
+    doc_to_screen(drag_x0, drag_y0, &ax, &ay);
+    doc_to_screen(drag_x1, drag_y1, &bx, &by);
     if (fatbits && tool != T_LINE) {
         bx += ZOOM - 1;
         by += ZOOM - 1;
@@ -1163,8 +1163,8 @@ static void tick(float dt)
                 snapshot();
                 dragging = 1;
                 shape_on = 1;
-                x0 = x1 = dx;
-                y0 = y1 = dy;
+                drag_x0 = drag_x1 = dx;
+                drag_y0 = drag_y1 = dy;
                 last_x = dx;
                 last_y = dy;
             } else {
@@ -1189,8 +1189,8 @@ static void tick(float dt)
         clamp_view();
     } else if (dragging && mac_mouse_down() && screen_to_doc(mx, my, &dx, &dy)) {
         if (shape_on) {
-            x1 = dx;
-            y1 = dy;
+            drag_x1 = dx;
+            drag_y1 = dy;
         }         else if (tool != T_HAND)
             paint_at(dx, dy, 0);
     }
